@@ -1,5 +1,6 @@
 import requests;
 from github import Github;
+import pandas
 
 g = Github('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') #in this object we input the token that allows us to do more api requests to the github api
 
@@ -10,11 +11,19 @@ print(f'Found {result.totalCount} file(s)')
 for file in result:
     print(file.html_url) #here we print the html url for each file we found. you might hit a rate limit exception
     
+# we could write the file.html_url directly into the csv file and do same operation as in google sheet.
+reposDF= pandas.read_csv("Repos.csv")
+
+#TODO:
+# get from the reposDF the user and repos and delete duplicates in the repository name for each owner
+# loop hrough each of them and get the creation date
+# then go again through each user and repo to get the commits date ##json_data[-1]['commit']['author']['date']
+# compare the comit date with today to get number of commits during a period of time
+
+
 #the next lines have been copied from 'https://gist.github.com/yershalom/a7c08f9441d1aadb13777bce4c7cdc3b' to test information retrieval on commits 
 
-base_url = 'https://api.github.com'
-
-
+'''
 def get_all_commits_count(owner, repo, sha):
     first_commit = get_first_commit(owner, repo)
     compare_url = '{}/repos/{}/{}/compare/{}...{}'.format(base_url, owner, repo, first_commit, sha)
@@ -27,10 +36,10 @@ def get_all_commits_count(owner, repo, sha):
 
 def get_first_commit(owner, repo):
     url = '{}/repos/{}/{}/commits'.format(base_url, owner, repo)
-    req = requests.get(url)
+    req = requests.get(url) #this retrieves all information about al the committs from the given owenr and repo
     json_data = req.json()
 
-    if req.headers.get('Link'):
+    if req.headers.('Link'):
         page_url = req.headers.get('Link').split(',')[1].split(';')[0].split('<')[1].split('>')[0]
         req_last_commit = requests.get(page_url)
         first_commit = req_last_commit.json()
@@ -38,3 +47,4 @@ def get_first_commit(owner, repo):
     else:
         first_commit_hash = json_data[-1]['sha']
     return first_commit_hash
+'''
