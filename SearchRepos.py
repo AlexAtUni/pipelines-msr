@@ -1,23 +1,45 @@
 import requests;
 from github import Github;
 import pandas
+access_token='' # input here access token. 
 
-g = Github('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') #in this object we input the token that allows us to do more api requests to the github api
+#!!!! do not commit with token visible !!!!
+
+g = Github(access_token) #in this object we input the token that allows us to do more api requests to the github api
+
+ #here we print the html url for each file we found. you might hit a rate limit exception
 
 query = f'filename:".gitlab-ci" extension:yml' #this query respect a github convention for searching code on the platform. Here we look for files that have ".gitlab-ci" in the filename and have the .yml extension
-result = g.search_code(query, order='desc') #this requests to github api files that match our query. 
+result = g.search_code(query, order='desc') #this requests to github api, files that match our query. 
 print(f'Found {result.totalCount} file(s)')
 
 for file in result:
-    print(file.html_url) #here we print the html url for each file we found. you might hit a rate limit exception
-    
+    html_url= file.html_url
+    file_name= file.name
+    repo = file.repository.name
+    user = file.repository.owner.login
+    #add here a way to add rows in the csv file 
+
+def get_creation_date(user, repo):
+    url='https://api.github.com/repos/{}/{}'.format(user, repo)
+    req = requests.get(url)
+    json_data= req.json()
+    return json_data['created_at']    
 # we could write the file.html_url directly into the csv file and do same operation as in google sheet.
 reposDF= pandas.read_csv("Repos.csv")
-
+user_repo = reposDF[["user","repo"]]
+user_repo=user_repo.drop_duplicates()
+users=user_repo["user"]
+repos=user_repo["repo"]
+users.to_numpy()
+repos.to_numpy()
+base_url = 'https://api.github.com/repos/'
+for user, repo in users,repos:
+    get_creation_date(user, repo)
 #TODO:
-# get from the reposDF the user and repos and delete duplicates in the repository name for each owner
-# loop hrough each of them and get the creation date
-# then go again through each user and repo to get the commits date ##json_data[-1]['commit']['author']['date']
+# get from the reposDF the user and repos and delete duplicates in the repository name for each owner               DONE
+# loop hrough each of them and get the creation date                                                                DONE
+# then go again through each user and repo to get the commits date ##json_data[-1]['commit']['author']['date']      
 # compare the comit date with today to get number of commits during a period of time
 
 
