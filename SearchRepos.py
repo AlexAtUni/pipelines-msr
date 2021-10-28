@@ -1,6 +1,7 @@
 import requests;
 from github import Github;
-import pandas
+import pandas;
+import numpy as np;
 access_token='' # input here access token. 
 
 #!!!! do not commit with token visible !!!!
@@ -8,17 +9,19 @@ access_token='' # input here access token.
 g = Github(access_token) #in this object we input the token that allows us to do more api requests to the github api
 
  #here we print the html url for each file we found. you might hit a rate limit exception
-
-query = f'filename:".gitlab-ci" extension:yml' #this query respect a github convention for searching code on the platform. Here we look for files that have ".gitlab-ci" in the filename and have the .yml extension
-result = g.search_code(query, order='desc') #this requests to github api, files that match our query. 
-print(f'Found {result.totalCount} file(s)')
-
-for file in result:
-    html_url= file.html_url
-    file_name= file.name
-    repo = file.repository.name
-    user = file.repository.owner.login
-    #add here a way to add rows in the csv file 
+def populateWithNewRepos(DataFrame):
+    query = f'filename:".gitlab-ci" extension:yml' #this query respect a github convention for searching code on the platform. Here we look for files that have ".gitlab-ci" in the filename and have the .yml extension
+    result = g.search_code(query, order='desc') #this requests to github api, files that match our query. 
+    print(f'Found {result.totalCount} file(s)')
+    for file in result:
+        html_url= file.html_url
+        file_name= file.name
+        repo = file.repository.name
+        user = file.repository.owner.login
+        newRow = {"user":user, "repo": repo, "file":file_name, "repos html url": html_url}
+        DataFrame.append(newRow, ignore_index=True)
+    DataFrame.dropduplicates()
+        #add here a way to add rows in the csv file 
 
 def get_creation_date(user, repo):
     url='https://api.github.com/repos/{}/{}'.format(user, repo)
@@ -27,15 +30,12 @@ def get_creation_date(user, repo):
     return json_data['created_at']    
 # we could write the file.html_url directly into the csv file and do same operation as in google sheet.
 reposDF= pandas.read_csv("Repos.csv")
-user_repo = reposDF[["user","repo"]]
-user_repo=user_repo.drop_duplicates()
-users=user_repo["user"]
-repos=user_repo["repo"]
-users.to_numpy()
-repos.to_numpy()
-base_url = 'https://api.github.com/repos/'
-for user, repo in users,repos:
-    get_creation_date(user, repo)
+
+for row in reposDF.iterrows():
+    date=get_creation_date(row["user"], row["repo"])
+    row["Date of creation"]=date
+
+
 #TODO:
 # get from the reposDF the user and repos and delete duplicates in the repository name for each owner               DONE
 # loop hrough each of them and get the creation date                                                                DONE
